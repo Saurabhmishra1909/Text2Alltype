@@ -56,15 +56,6 @@ def convert_to_pdf(text, font_family, font_size, alignment):
         pdf.set_font(font_family, size=int(font_size))
         pdf.set_text_color(0, 0, 0)  # Black color for text
         pdf.multi_cell(0, 10, txt=text, align=alignment)
-        pdf = FPDF()
-        pdf.add_page()
-
-        # Add watermark
-        pdf.set_font('Arial', 'B', 60)
-        pdf.set_text_color(200, 200, 200)  # Light gray color
-        pdf.rotate(45, 50, 50)
-        pdf.text(50, 50, "Saurabh")
-        pdf.rotate(0) 
         
         # Save PDF to memory (in-memory file)
         pdf_output = BytesIO()
