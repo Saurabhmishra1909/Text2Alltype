@@ -15,6 +15,39 @@ import textwrap
 import datetime
 from io import BytesIO  # For in-memory file creation
 
+
+st.markdown("""
+    <style>
+        .stButton>button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .stButton>button:hover {
+            background-color: #45a049;
+        }
+        .stTextInput>div>input {
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .stSelectbox>div>div {
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        .stRadio>div>label {
+            font-size: 14px;
+        }
+        .stColorPicker>div>label {
+            font-size: 14px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Function to convert text to PDF
 def convert_to_pdf(text, font_family, font_size, alignment):
     try:
