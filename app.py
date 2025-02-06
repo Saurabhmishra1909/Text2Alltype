@@ -422,37 +422,37 @@ class TextConverter:
         if not save_path or not text:
             return
 
-    try:
-        width, height = 800, 400
-        image = Image.new("RGB", (width, height), "white")  # Or "RGBA" for transparency
-        draw = ImageDraw.Draw(image)
+        try:  # Correct indentation - try block is *inside* the function
+            width, height = 800, 400
+            image = Image.new("RGB", (width, height), "white")
+            draw = ImageDraw.Draw(image)
 
-        try: # Font loading try-except block
-            font = ImageFont.truetype(self.font_family.get()+".ttf", int(self.font_size.get()))
-        except IOError:
-            try:
-                font = ImageFont.truetype("arial.ttf", int(self.font_size.get()))
+            try:  # Inner try for font loading
+                font = ImageFont.truetype(self.font_family.get()+".ttf", int(self.font_size.get()))
             except IOError:
-                font = ImageFont.load_default()
-                messagebox.showwarning("Warning", "No fonts found. Using default font.") # Inform user
+                try:
+                    font = ImageFont.truetype("arial.ttf", int(self.font_size.get()))
+                except IOError:
+                    font = ImageFont.load_default()
+                    messagebox.showwarning("Warning", "No fonts found. Using default font.")
 
-        color = tuple(int(self.text_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+            color = tuple(int(self.text_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
 
-        max_width = width - 100  # Adjust as needed
-        wrapped_text = textwrap.fill(text, width=max_width) # Wrap the text
+            max_width = width - 100
+            wrapped_text = textwrap.fill(text, width=max_width)
 
-        text_width, text_height = draw.textsize(wrapped_text, font=font) # Size of wrapped text
-        x = (width - text_width) / 2
-        y = (height - text_height) / 2
+            text_width, text_height = draw.textsize(wrapped_text, font=font)
+            x = (width - text_width) / 2
+            y = (height - text_height) / 2
 
-        draw.text((x, y), wrapped_text, font=font, fill=color) # Draw wrapped text
-        image.save(save_path)
-        messagebox.showinfo("Success", f"Image file created: {save_path}")
+            draw.text((x, y), wrapped_text, font=font, fill=color)
+            image.save(save_path)
+            messagebox.showinfo("Success", f"Image file created: {save_path}")
 
-    except IOError as e:  # Catch font errors more specifically
-        messagebox.showerror("Error", f"Failed to load font: {str(e)}")
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to create Image: {str(e)}") 
+        except IOError as e:  # Outer except block
+            messagebox.showerror("Error", f"Failed to load font: {str(e)}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to create Image: {str(e)}")
         
 def main():
     root = tk.Tk()
