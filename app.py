@@ -13,22 +13,29 @@ import xml.etree.ElementTree as ET
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import datetime
+from io import BytesIO  # For in-memory file creation
 
 # Function to convert text to PDF
-def convert_to_pdf(text, font_family, font_size, alignment, save_path):
+def convert_to_pdf(text, font_family, font_size, alignment):
     try:
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font(font_family, size=int(font_size))
         pdf.set_text_color(0, 0, 0)  # Black color for text
         pdf.multi_cell(0, 10, txt=text, align=alignment)
-        pdf.output(save_path)
-        st.success(f"PDF file created: {save_path}")
+        
+        # Save PDF to memory (in-memory file)
+        pdf_output = BytesIO()
+        pdf.output(pdf_output)
+        pdf_output.seek(0)
+
+        return pdf_output
     except Exception as e:
         st.error(f"Failed to create PDF: {str(e)}")
+        return None
 
 # Function to convert text to DOCX
-def convert_to_docx(text, font_family, font_size, alignment, save_path):
+def convert_to_docx(text, font_family, font_size, alignment):
     try:
         doc = Document()
         style = doc.styles['Normal']
@@ -37,13 +44,19 @@ def convert_to_docx(text, font_family, font_size, alignment, save_path):
         font.size = font_size
         paragraph = doc.add_paragraph(text)
         paragraph.alignment = {"left": 0, "center": 1, "right": 2}[alignment]
-        doc.save(save_path)
-        st.success(f"DOCX file created: {save_path}")
+        
+        # Save DOCX to memory (in-memory file)
+        doc_output = BytesIO()
+        doc.save(doc_output)
+        doc_output.seek(0)
+
+        return doc_output
     except Exception as e:
         st.error(f"Failed to create DOCX: {str(e)}")
+        return None
 
 # Function to convert text to Image
-def convert_to_image(text, font_family, font_size, text_color, save_path):
+def convert_to_image(text, font_family, font_size, text_color):
     try:
         width, height = 800, 400
         image = Image.new("RGB", (width, height), "white")
@@ -64,13 +77,19 @@ def convert_to_image(text, font_family, font_size, text_color, save_path):
         y = (height - text_height) / 2
 
         draw.text((x, y), wrapped_text, font=font, fill=text_color)
-        image.save(save_path)
-        st.success(f"Image file created: {save_path}")
+
+        # Save image to memory (in-memory file)
+        image_output = BytesIO()
+        image.save(image_output, format="PNG")
+        image_output.seek(0)
+
+        return image_output
     except Exception as e:
         st.error(f"Failed to create Image: {str(e)}")
+        return None
 
 # Function to convert text to HTML
-def convert_to_html(text, font_family, font_size, text_color, alignment, save_path):
+def convert_to_html(text, font_family, font_size, text_color, alignment):
     try:
         html_content = f"""
         <!DOCTYPE html>
@@ -90,57 +109,79 @@ def convert_to_html(text, font_family, font_size, text_color, alignment, save_pa
         </body>
         </html>
         """
-        with open(save_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        st.success(f"HTML file created: {save_path}")
+        # Save HTML to memory (in-memory file)
+        html_output = BytesIO()
+        html_output.write(html_content.encode())
+        html_output.seek(0)
+
+        return html_output
     except Exception as e:
         st.error(f"Failed to create HTML: {str(e)}")
+        return None
 
 # Function to convert text to Markdown
-def convert_to_markdown(text, save_path):
+def convert_to_markdown(text):
     try:
         md_content = f"# Text Content\n\n{text}"
-        with open(save_path, 'w', encoding='utf-8') as f:
-            f.write(md_content)
-        st.success(f"Markdown file created: {save_path}")
+        # Save Markdown to memory (in-memory file)
+        md_output = BytesIO()
+        md_output.write(md_content.encode())
+        md_output.seek(0)
+
+        return md_output
     except Exception as e:
         st.error(f"Failed to create Markdown: {str(e)}")
+        return None
 
 # Function to convert text to TXT
-def convert_to_txt(text, save_path):
+def convert_to_txt(text):
     try:
-        with open(save_path, 'w', encoding='utf-8') as f:
-            f.write(text)
-        st.success(f"TXT file created: {save_path}")
+        # Save TXT to memory (in-memory file)
+        txt_output = BytesIO()
+        txt_output.write(text.encode())
+        txt_output.seek(0)
+
+        return txt_output
     except Exception as e:
         st.error(f"Failed to create TXT: {str(e)}")
+        return None
 
 # Function to convert text to CSV
-def convert_to_csv(text, save_path):
+def convert_to_csv(text):
     try:
         rows = text.split('\n')
-        with open(save_path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            for row in rows:
-                writer.writerow([row])
-        st.success(f"CSV file created: {save_path}")
+        # Save CSV to memory (in-memory file)
+        csv_output = BytesIO()
+        writer = csv.writer(csv_output, delimiter=',')
+        for row in rows:
+            writer.writerow([row])
+        csv_output.seek(0)
+
+        return csv_output
     except Exception as e:
         st.error(f"Failed to create CSV: {str(e)}")
+        return None
 
 # Function to convert text to XML
-def convert_to_xml(text, save_path):
+def convert_to_xml(text):
     try:
         root = ET.Element("document")
         content = ET.SubElement(root, "content")
         content.text = text
         tree = ET.ElementTree(root)
-        tree.write(save_path, encoding='utf-8', xml_declaration=True)
-        st.success(f"XML file created: {save_path}")
+
+        # Save XML to memory (in-memory file)
+        xml_output = BytesIO()
+        tree.write(xml_output, encoding='utf-8', xml_declaration=True)
+        xml_output.seek(0)
+
+        return xml_output
     except Exception as e:
         st.error(f"Failed to create XML: {str(e)}")
+        return None
 
 # Function to convert text to JSON
-def convert_to_json(text, font_family, font_size, text_color, alignment, save_path):
+def convert_to_json(text, font_family, font_size, text_color, alignment):
     try:
         json_content = {
             'content': text,
@@ -156,11 +197,15 @@ def convert_to_json(text, font_family, font_size, text_color, alignment, save_pa
                 'character_count': len(text)
             }
         }
-        with open(save_path, 'w', encoding='utf-8') as f:
-            json.dump(json_content, f, indent=4)
-        st.success(f"JSON file created: {save_path}")
+        # Save JSON to memory (in-memory file)
+        json_output = BytesIO()
+        json.dump(json_content, json_output, indent=4)
+        json_output.seek(0)
+
+        return json_output
     except Exception as e:
         st.error(f"Failed to create JSON: {str(e)}")
+        return None
 
 # Streamlit interface
 def main():
@@ -176,51 +221,105 @@ def main():
     # Output filename
     filename = st.text_input("Output filename (without extension):")
 
-    # Conversion buttons
+    # Conversion buttons and download options
     if st.button("Convert to PDF"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.pdf")
-            convert_to_pdf(text, font_family, font_size, alignment, save_path)
+            pdf_output = convert_to_pdf(text, font_family, font_size, alignment)
+            if pdf_output:
+                st.download_button(
+                    label="Download PDF",
+                    data=pdf_output,
+                    file_name=f"{filename}.pdf",
+                    mime="application/pdf"
+                )
 
     if st.button("Convert to DOCX"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.docx")
-            convert_to_docx(text, font_family, font_size, alignment, save_path)
+            doc_output = convert_to_docx(text, font_family, font_size, alignment)
+            if doc_output:
+                st.download_button(
+                    label="Download DOCX",
+                    data=doc_output,
+                    file_name=f"{filename}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
 
     if st.button("Convert to Image"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.png")
-            convert_to_image(text, font_family, font_size, text_color, save_path)
+            image_output = convert_to_image(text, font_family, font_size, text_color)
+            if image_output:
+                st.download_button(
+                    label="Download Image",
+                    data=image_output,
+                    file_name=f"{filename}.png",
+                    mime="image/png"
+                )
 
     if st.button("Convert to HTML"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.html")
-            convert_to_html(text, font_family, font_size, text_color, alignment, save_path)
+            html_output = convert_to_html(text, font_family, font_size, text_color, alignment)
+            if html_output:
+                st.download_button(
+                    label="Download HTML",
+                    data=html_output,
+                    file_name=f"{filename}.html",
+                    mime="text/html"
+                )
 
     if st.button("Convert to Markdown"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.md")
-            convert_to_markdown(text, save_path)
+            md_output = convert_to_markdown(text)
+            if md_output:
+                st.download_button(
+                    label="Download Markdown",
+                    data=md_output,
+                    file_name=f"{filename}.md",
+                    mime="text/markdown"
+                )
 
     if st.button("Convert to TXT"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.txt")
-            convert_to_txt(text, save_path)
+            txt_output = convert_to_txt(text)
+            if txt_output:
+                st.download_button(
+                    label="Download TXT",
+                    data=txt_output,
+                    file_name=f"{filename}.txt",
+                    mime="text/plain"
+                )
 
     if st.button("Convert to CSV"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.csv")
-            convert_to_csv(text, save_path)
+            csv_output = convert_to_csv(text)
+            if csv_output:
+                st.download_button(
+                    label="Download CSV",
+                    data=csv_output,
+                    file_name=f"{filename}.csv",
+                    mime="text/csv"
+                )
 
     if st.button("Convert to XML"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.xml")
-            convert_to_xml(text, save_path)
+            xml_output = convert_to_xml(text)
+            if xml_output:
+                st.download_button(
+                    label="Download XML",
+                    data=xml_output,
+                    file_name=f"{filename}.xml",
+                    mime="application/xml"
+                )
 
     if st.button("Convert to JSON"):
         if text and filename:
-            save_path = os.path.join(os.getcwd(), f"{filename}.json")
-            convert_to_json(text, font_family, font_size, text_color, alignment, save_path)
+            json_output = convert_to_json(text, font_family, font_size, text_color, alignment)
+            if json_output:
+                st.download_button(
+                    label="Download JSON",
+                    data=json_output,
+                    file_name=f"{filename}.json",
+                    mime="application/json"
+                )
 
 if __name__ == "__main__":
     main()
