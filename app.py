@@ -261,7 +261,7 @@ def main():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        if st.button("Convert to PDF"):
+        if st.button("PDF"):
             if text and filename:
                 pdf_output = convert_to_pdf(text, font_family, font_size, alignment)
                 if pdf_output:
@@ -273,7 +273,7 @@ def main():
                     )
 
     with col2:
-        if st.button("Convert to DOCX"):
+        if st.button("DOCX"):
             if text and filename:
                 doc_output = convert_to_docx(text, font_family, font_size, alignment)
                 if doc_output:
@@ -285,7 +285,7 @@ def main():
                     )
 
     with col3:
-        if st.button("Convert to Image"):
+        if st.button("Image"):
             if text and filename:
                 image_output = convert_to_image(text, font_family, font_size, text_color)
                 if image_output:
@@ -297,7 +297,7 @@ def main():
                     )
 
     with col4:
-        if st.button("Convert to HTML"):
+        if st.button("HTML"):
             if text and filename:
                 html_output = convert_to_html(text, font_family, font_size, text_color, alignment)
                 if html_output:
@@ -309,7 +309,7 @@ def main():
                     )
 
     with col5:
-        if st.button("Convert to Markdown"):
+        if st.button("Markdown"):
             if text and filename:
                 md_output = convert_to_markdown(text)
                 if md_output:
@@ -324,7 +324,7 @@ def main():
     col6, col7, col8, col9, col10 = st.columns(5)
 
     with col6:
-        if st.button("Convert to TXT"):
+        if st.button("TXT"):
             if text and filename:
                 txt_output = convert_to_txt(text)
                 if txt_output:
@@ -336,7 +336,7 @@ def main():
                     )
 
     with col7:
-        if st.button("Convert to CSV"):
+        if st.button("CSV"):
             if text and filename:
                 csv_output = convert_to_csv(text)
                 if csv_output:
@@ -348,7 +348,7 @@ def main():
                     )
 
     with col8:
-        if st.button("Convert to XML"):
+        if st.button("XML"):
             if text and filename:
                 xml_output = convert_to_xml(text)
                 if xml_output:
@@ -360,7 +360,7 @@ def main():
                     )
 
     with col9:
-        if st.button("Convert to JSON"):
+        if st.button("JSON"):
             if text and filename:
                 json_output = convert_to_json(text, font_family, font_size, text_color, alignment)
                 if json_output:
