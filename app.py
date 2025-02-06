@@ -1,10 +1,9 @@
-import tkinter as tk
-from tkinter import ttk, messagebox, filedialog, colorchooser
+import streamlit as st
 from docx import Document
 from docx.shared import Pt, RGBColor
 from fpdf import FPDF
 from pptx import Presentation
-from pptx.util import Inches, Pt as PptPt
+from pptx.util import Pt as PptPt
 from pptx.dml.color import RGBColor as PptRGBColor
 import markdown
 import os
@@ -15,460 +14,213 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import datetime
 
-class TextConverter:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Advanced Text Format Converter")
-        
-        self.font_family = tk.StringVar(value="Arial")
-        self.font_size = tk.StringVar(value="12")
-        self.text_color = "#000000"
-        self.save_directory = os.getcwd()
-        self.alignment = tk.StringVar(value="left")
+# Function to convert text to PDF
+def convert_to_pdf(text, font_family, font_size, alignment, save_path):
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font(font_family, size=int(font_size))
+        pdf.set_text_color(0, 0, 0)  # Black color for text
+        pdf.multi_cell(0, 10, txt=text, align=alignment)
+        pdf.output(save_path)
+        st.success(f"PDF file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create PDF: {str(e)}")
 
-        self.create_gui()
+# Function to convert text to DOCX
+def convert_to_docx(text, font_family, font_size, alignment, save_path):
+    try:
+        doc = Document()
+        style = doc.styles['Normal']
+        font = style.font
+        font.name = font_family
+        font.size = font_size
+        paragraph = doc.add_paragraph(text)
+        paragraph.alignment = {"left": 0, "center": 1, "right": 2}[alignment]
+        doc.save(save_path)
+        st.success(f"DOCX file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create DOCX: {str(e)}")
 
-    def create_gui(self):
-        self.main_frame = ttk.Frame(self.root, padding="10")
-        self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        self.create_style_frame()
-        
-        self.text_label = ttk.Label(self.main_frame, text="Enter your text:")
-        self.text_label.grid(row=2, column=0, sticky=tk.W, pady=5)
-        
-        self.text_input = tk.Text(self.main_frame, height=10, width=60)
-        self.text_input.grid(row=3, column=0, columnspan=3, pady=5)
-        
-        self.filename_label = ttk.Label(self.main_frame, text="Output filename (without extension):")
-        self.filename_label.grid(row=4, column=0, sticky=tk.W, pady=5)
-        
-        self.filename_entry = ttk.Entry(self.main_frame, width=40)
-        self.filename_entry.grid(row=4, column=1, sticky=tk.W, pady=5)
-        
-        self.create_save_location_frame()
-        self.create_conversion_buttons()
-
-    def create_style_frame(self):
-        style_frame = ttk.LabelFrame(self.main_frame, text="Style Options", padding="5")
-        style_frame.grid(row=0, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        ttk.Label(style_frame, text="Font:").grid(row=0, column=0, padx=5)
-        fonts = ["Arial", "Times New Roman", "Courier", "Helvetica", "Verdana"]
-        font_combo = ttk.Combobox(style_frame, textvariable=self.font_family, values=fonts)
-        font_combo.grid(row=0, column=1, padx=5)
-        
-        ttk.Label(style_frame, text="Size:").grid(row=0, column=2, padx=5)
-        sizes = [str(i) for i in range(8, 73, 2)]
-        size_combo = ttk.Combobox(style_frame, textvariable=self.font_size, values=sizes, width=5)
-        size_combo.grid(row=0, column=3, padx=5)
-        
-        ttk.Button(style_frame, text="Text Color", command=self.choose_color).grid(row=0, column=4, padx=5)
-        
-        ttk.Radiobutton(style_frame, text="Left", variable=self.alignment, value="left").grid(row=0, column=5, padx=5)
-        ttk.Radiobutton(style_frame, text="Center", variable=self.alignment, value="center").grid(row=0, column=6, padx=5)
-        ttk.Radiobutton(style_frame, text="Right", variable=self.alignment, value="right").grid(row=0, column=7, padx=5)
-
-    def create_save_location_frame(self):
-        save_frame = ttk.Frame(self.main_frame)
-        save_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        ttk.Label(save_frame, text="Save Location:").grid(row=0, column=0, sticky=tk.W)
-        self.save_location_label = ttk.Label(save_frame, text=self.save_directory, wraplength=400)
-        self.save_location_label.grid(row=0, column=1, sticky=tk.W, padx=5)
-        ttk.Button(save_frame, text="Browse", command=self.browse_location).grid(row=0, column=2, padx=5)
-
-    def create_conversion_buttons(self):
-        button_frame = ttk.LabelFrame(self.main_frame, text="Convert To", padding="5")
-        button_frame.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        ttk.Button(button_frame, text="PDF", command=self.convert_to_pdf).grid(row=0, column=0, padx=5, pady=5)
-        ttk.Button(button_frame, text="DOCX", command=self.convert_to_docx).grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(button_frame, text="PPT", command=self.convert_to_ppt).grid(row=0, column=2, padx=5, pady=5)
-        ttk.Button(button_frame, text="HTML", command=self.convert_to_html).grid(row=0, column=3, padx=5, pady=5)
-        ttk.Button(button_frame, text="Markdown", command=self.convert_to_markdown).grid(row=0, column=4, padx=5, pady=5)
-        ttk.Button(button_frame, text="TXT", command=self.convert_to_txt).grid(row=1, column=0, padx=5, pady=5)
-        ttk.Button(button_frame, text="CSV", command=self.convert_to_csv).grid(row=1, column=1, padx=5, pady=5)
-        ttk.Button(button_frame, text="XML", command=self.convert_to_xml).grid(row=1, column=2, padx=5, pady=5)
-        ttk.Button(button_frame, text="JSON", command=self.convert_to_json).grid(row=1, column=3, padx=5, pady=5)
-        ttk.Button(button_frame, text="Image", command=self.convert_to_image).grid(row=1, column=4, padx=5, pady=5)    
-
-    def convert_to_markdown(self):
-        save_path = self.get_save_path("md")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            md_content = f"# Text Content\n\n{text}"  # Basic Markdown content
-            with open(save_path, 'w', encoding='utf-8') as f:
-                f.write(md_content)
-            messagebox.showinfo("Success", f"Markdown file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create Markdown: {str(e)}")
-               
-    def create_style_frame(self):
-        style_frame = ttk.LabelFrame(self.main_frame, text="Style Options", padding="5")
-        style_frame.grid(row=0, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        # Font family
-        ttk.Label(style_frame, text="Font:").grid(row=0, column=0, padx=5)
-        fonts = ["Arial", "Times New Roman", "Courier", "Helvetica", "Verdana"]
-        font_combo = ttk.Combobox(style_frame, textvariable=self.font_family, values=fonts)
-        font_combo.grid(row=0, column=1, padx=5)
-        
-        # Font size
-        ttk.Label(style_frame, text="Size:").grid(row=0, column=2, padx=5)
-        sizes = [str(i) for i in range(8, 73, 2)]
-        size_combo = ttk.Combobox(style_frame, textvariable=self.font_size, values=sizes, width=5)
-        size_combo.grid(row=0, column=3, padx=5)
-        
-        # Color picker
-        ttk.Button(style_frame, text="Text Color", command=self.choose_color).grid(row=0, column=4, padx=5)
-        
-        # Text alignment
-        self.alignment = tk.StringVar(value="left")
-        ttk.Radiobutton(style_frame, text="Left", variable=self.alignment, value="left").grid(row=0, column=5, padx=5)
-        ttk.Radiobutton(style_frame, text="Center", variable=self.alignment, value="center").grid(row=0, column=6, padx=5)
-        ttk.Radiobutton(style_frame, text="Right", variable=self.alignment, value="right").grid(row=0, column=7, padx=5)
-
-    def create_save_location_frame(self):
-        save_frame = ttk.Frame(self.main_frame)
-        save_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        ttk.Label(save_frame, text="Save Location:").grid(row=0, column=0, sticky=tk.W)
-        self.save_location_label = ttk.Label(save_frame, text=self.save_directory, wraplength=400)
-        self.save_location_label.grid(row=0, column=1, sticky=tk.W, padx=5)
-        ttk.Button(save_frame, text="Browse", command=self.browse_location).grid(row=0, column=2, padx=5)
-
-    def create_conversion_buttons(self):
-        button_frame = ttk.LabelFrame(self.main_frame, text="Convert To", padding="5")
-        button_frame.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        # Document formats
-        ttk.Button(button_frame, text="PDF", command=self.convert_to_pdf).grid(row=0, column=0, padx=5, pady=5)
-        ttk.Button(button_frame, text="DOCX", command=self.convert_to_docx).grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(button_frame, text="PPT", command=self.convert_to_ppt).grid(row=0, column=2, padx=5, pady=5)
-        
-        # Web formats
-        ttk.Button(button_frame, text="HTML", command=self.convert_to_html).grid(row=0, column=3, padx=5, pady=5)
-        ttk.Button(button_frame, text="Markdown", command=self.convert_to_markdown).grid(row=0, column=4, padx=5, pady=5)
-        
-        # Data formats
-        ttk.Button(button_frame, text="TXT", command=self.convert_to_txt).grid(row=1, column=0, padx=5, pady=5)
-        ttk.Button(button_frame, text="CSV", command=self.convert_to_csv).grid(row=1, column=1, padx=5, pady=5)
-        ttk.Button(button_frame, text="XML", command=self.convert_to_xml).grid(row=1, column=2, padx=5, pady=5)
-        ttk.Button(button_frame, text="JSON", command=self.convert_to_json).grid(row=1, column=3, padx=5, pady=5)
-        
-        # Image format
-        ttk.Button(button_frame, text="Image", command=self.convert_to_image).grid(row=1, column=4, padx=5, pady=5)
-
-    def choose_color(self):
-        color = colorchooser.askcolor(title="Choose Text Color")
-        if color[1]:
-            self.text_color = color[1]
-
-    def browse_location(self):
-        directory = filedialog.askdirectory()
-        if directory:
-            self.save_directory = directory
-            self.save_location_label.config(text=directory)
-
-    def get_save_path(self, extension):
-        filename = self.filename_entry.get().strip()
-        if not filename:
-            messagebox.showerror("Error", "Please enter a filename")
-            return None
-        return os.path.join(self.save_directory, f"{filename}.{extension}")
-
-    def get_text(self):
-        text = self.text_input.get("1.0", tk.END).strip()
-        if not text:
-            messagebox.showerror("Error", "Please enter some text")
-            return None
-        return text
-
-    def convert_to_pdf(self):
-        save_path = self.get_save_path("pdf")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font(self.font_family.get(), size=int(self.font_size.get()))
-            
-            # Convert hex color to RGB
-            color = tuple(int(self.text_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-            pdf.set_text_color(*color)
-            
-            # Set alignment
-            pdf.set_font(self.font_family.get(), size=int(self.font_size.get()))
-            pdf.multi_cell(0, 10, txt=text, align=self.alignment.get())
-            
-            pdf.output(save_path)
-            messagebox.showinfo("Success", f"PDF file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create PDF: {str(e)}")
-
-    def convert_to_docx(self):
-        save_path = self.get_save_path("docx")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            doc = Document()
-            style = doc.styles['Normal']
-            font = style.font
-            font.name = self.font_family.get()
-            font.size = Pt(int(self.font_size.get()))
-            
-            # Convert hex color to RGB
-            color = tuple(int(self.text_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-            font.color.rgb = RGBColor(*color)
-            
-            paragraph = doc.add_paragraph(text)
-            paragraph.alignment = {"left": 0, "center": 1, "right": 2}[self.alignment.get()]
-            
-            doc.save(save_path)
-            messagebox.showinfo("Success", f"DOCX file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create DOCX: {str(e)}")
-
-    def convert_to_ppt(self):
-        save_path = self.get_save_path("pptx")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            prs = Presentation()
-            slide = prs.slides.add_slide(prs.slide_layouts[1])
-            
-            # Set title
-            title = slide.shapes.title
-            title.text = "Text Content"
-            
-            # Set content with formatting
-            content = slide.shapes.placeholders[1]
-            text_frame = content.text_frame
-            
-            paragraph = text_frame.paragraphs[0]
-            paragraph.text = text
-            paragraph.font.name = self.font_family.get()
-            paragraph.font.size = PptPt(int(self.font_size.get()))
-            
-            # Convert hex color to RGB
-            color = tuple(int(self.text_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-            paragraph.font.color.rgb = PptRGBColor(*color)
-            
-            paragraph.alignment = {"left": 1, "center": 2, "right": 3}[self.alignment.get()]
-            
-            prs.save(save_path)
-            messagebox.showinfo("Success", f"PPTX file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create PPTX: {str(e)}")
-
-    def convert_to_html(self):
-        save_path = self.get_save_path("html")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{
-                        font-family: {self.font_family.get()};
-                        font-size: {self.font_size.get()}px;
-                        color: {self.text_color};
-                        text-align: {self.alignment.get()};
-                    }}
-                </style>
-            </head>
-            <body>
-                <p>{text}</p>
-            </body>
-            </html>
-            """
-            
-            with open(save_path, 'w', encoding='utf-8') as f:
-                f.write(html_content)
-            
-            messagebox.showinfo("Success", f"HTML file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create HTML: {str(e)}")
-
-    def convert_to_json(self):
-        save_path = self.get_save_path("json")
-        text = self.get_text()
-        if not save_path or not text:
-            return
+# Function to convert text to Image
+def convert_to_image(text, font_family, font_size, text_color, save_path):
+    try:
+        width, height = 800, 400
+        image = Image.new("RGB", (width, height), "white")
+        draw = ImageDraw.Draw(image)
 
         try:
-            json_content = {
-                'content': text,
-                'styling': {
-                    'font_family': self.font_family.get(),
-                    'font_size': self.font_size.get(),
-                    'text_color': self.text_color,
-                    'alignment': self.alignment.get(),
-                },
-                'metadata': {
-                    'created_at': str(datetime.datetime.now()),
-                    'word_count': len(text.split()),
-                    'character_count': len(text)
-                }
+            font = ImageFont.truetype(font_family, int(font_size))
+        except IOError:
+            font = ImageFont.load_default()
+            st.warning("No fonts found. Using default font.")
+
+        max_width = width - 100
+        wrapped_text = textwrap.fill(text, width=max_width)
+
+        text_bbox = draw.textbbox((0, 0), wrapped_text, font=font)
+        text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
+        x = (width - text_width) / 2
+        y = (height - text_height) / 2
+
+        draw.text((x, y), wrapped_text, font=font, fill=text_color)
+        image.save(save_path)
+        st.success(f"Image file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create Image: {str(e)}")
+
+# Function to convert text to HTML
+def convert_to_html(text, font_family, font_size, text_color, alignment, save_path):
+    try:
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: {font_family};
+                    font-size: {font_size}px;
+                    color: {text_color};
+                    text-align: {alignment};
+                }}
+            </style>
+        </head>
+        <body>
+            <p>{text}</p>
+        </body>
+        </html>
+        """
+        with open(save_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        st.success(f"HTML file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create HTML: {str(e)}")
+
+# Function to convert text to Markdown
+def convert_to_markdown(text, save_path):
+    try:
+        md_content = f"# Text Content\n\n{text}"
+        with open(save_path, 'w', encoding='utf-8') as f:
+            f.write(md_content)
+        st.success(f"Markdown file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create Markdown: {str(e)}")
+
+# Function to convert text to TXT
+def convert_to_txt(text, save_path):
+    try:
+        with open(save_path, 'w', encoding='utf-8') as f:
+            f.write(text)
+        st.success(f"TXT file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create TXT: {str(e)}")
+
+# Function to convert text to CSV
+def convert_to_csv(text, save_path):
+    try:
+        rows = text.split('\n')
+        with open(save_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            for row in rows:
+                writer.writerow([row])
+        st.success(f"CSV file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create CSV: {str(e)}")
+
+# Function to convert text to XML
+def convert_to_xml(text, save_path):
+    try:
+        root = ET.Element("document")
+        content = ET.SubElement(root, "content")
+        content.text = text
+        tree = ET.ElementTree(root)
+        tree.write(save_path, encoding='utf-8', xml_declaration=True)
+        st.success(f"XML file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create XML: {str(e)}")
+
+# Function to convert text to JSON
+def convert_to_json(text, font_family, font_size, text_color, alignment, save_path):
+    try:
+        json_content = {
+            'content': text,
+            'styling': {
+                'font_family': font_family,
+                'font_size': font_size,
+                'text_color': text_color,
+                'alignment': alignment,
+            },
+            'metadata': {
+                'created_at': str(datetime.datetime.now()),
+                'word_count': len(text.split()),
+                'character_count': len(text)
             }
-            
-            with open(save_path, 'w', encoding='utf-8') as f:
-                json.dump(json_content, f, indent=4)
-            messagebox.showinfo("Success", f"JSON file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create JSON: {str(e)}")
-            
-    def convert_to_txt(self):
-        save_path = self.get_save_path("txt")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            with open(save_path, 'w', encoding='utf-8') as f:
-                f.write(text)
-            
-            messagebox.showinfo("Success", f"TXT file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create TXT: {str(e)}")
+        }
+        with open(save_path, 'w', encoding='utf-8') as f:
+            json.dump(json_content, f, indent=4)
+        st.success(f"JSON file created: {save_path}")
+    except Exception as e:
+        st.error(f"Failed to create JSON: {str(e)}")
 
-    def convert_to_csv(self):
-        save_path = self.get_save_path("csv")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            # Split text into rows
-            rows = text.split('\n')
-            with open(save_path, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                for row in rows:
-                    writer.writerow([row])
-            
-            messagebox.showinfo("Success", f"CSV file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create CSV: {str(e)}")
-
-    def convert_to_xml(self):
-        save_path = self.get_save_path("xml")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-        
-        try:
-            root = ET.Element("document")
-            content = ET.SubElement(root, "content")
-            content.text = text
-            
-            tree = ET.ElementTree(root)
-            tree.write(save_path, encoding='utf-8', xml_declaration=True)
-            
-            messagebox.showinfo("Success", f"XML file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", "Failed to create XML: " + str(e))
-            
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(rtf_content)
-            messagebox.showinfo("Success", f"RTF file created: {output_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create RTF: {str(e)}")
-
-    def convert_to_json(self):
-        save_path = self.get_save_path("json")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-
-        try:
-            json_content = {
-                'content': text,
-                'styling': {
-                    'font_family': self.font_family.get(),
-                    'font_size': self.font_size.get(),
-                    'text_color': self.text_color,
-                    'alignment': self.alignment.get(),
-                },
-                'metadata': {
-                    'created_at': str(datetime.datetime.now()),
-                    'word_count': len(text.split()),
-                    'character_count': len(text)
-                }
-            }
-            
-            with open(save_path, 'w', encoding='utf-8') as f:
-                json.dump(json_content, f, indent=4)
-            messagebox.showinfo("Success", f"JSON file created: {save_path}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create JSON: {str(e)}")
-            
-    def convert_to_image(self):
-        save_path = self.get_save_path("png")
-        text = self.get_text()
-        if not save_path or not text:
-            return
-
-        try:
-            # Image creation
-            width, height = 800, 400
-            image = Image.new("RGB", (width, height), "white")
-            draw = ImageDraw.Draw(image)
-
-            try:
-                # Try to load the selected font
-                font = ImageFont.truetype(self.font_family.get() + ".ttf", int(self.font_size.get()))
-            except IOError:
-                try:
-                    font = ImageFont.truetype("arial.ttf", int(self.font_size.get()))
-                except IOError:
-                    font = ImageFont.load_default()
-                    messagebox.showwarning("Warning", "No fonts found. Using default font.")
-
-            # Color conversion (hex to RGB)
-            color = tuple(int(self.text_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-
-            # Wrapping the text to fit within the image width
-            max_width = width - 100  # Leave space for margins
-            wrapped_text = textwrap.fill(text, width=max_width)
-
-            # Use textbbox to get the text width and height
-            text_bbox = draw.textbbox((0, 0), wrapped_text, font=font)  # Get the bounding box
-            text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
-
-            # Calculate position to center the text
-            x = (width - text_width) / 2
-            y = (height - text_height) / 2
-
-            # Draw the wrapped text on the image
-            draw.text((x, y), wrapped_text, font=font, fill=color)
-
-            # Save the image
-            image.save(save_path)
-            messagebox.showinfo("Success", f"Image file created: {save_path}")
-
-        except IOError as e:
-            messagebox.showerror("Error", f"Failed to load font: {str(e)}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create Image: {str(e)}")
-        
+# Streamlit interface
 def main():
-    root = tk.Tk()
-    app = TextConverter(root)
-    root.mainloop()
+    st.title("Text to Various File Formats Converter")
+
+    # Inputs
+    text = st.text_area("Enter your text:")
+    font_family = st.selectbox("Select Font", ["Arial", "Times New Roman", "Courier", "Helvetica"])
+    font_size = st.selectbox("Select Font Size", [str(i) for i in range(8, 73, 2)])
+    alignment = st.radio("Select Text Alignment", ["left", "center", "right"])
+    text_color = st.color_picker("Choose Text Color", "#000000")
+
+    # Output filename
+    filename = st.text_input("Output filename (without extension):")
+
+    # Conversion buttons
+    if st.button("Convert to PDF"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.pdf")
+            convert_to_pdf(text, font_family, font_size, alignment, save_path)
+
+    if st.button("Convert to DOCX"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.docx")
+            convert_to_docx(text, font_family, font_size, alignment, save_path)
+
+    if st.button("Convert to Image"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.png")
+            convert_to_image(text, font_family, font_size, text_color, save_path)
+
+    if st.button("Convert to HTML"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.html")
+            convert_to_html(text, font_family, font_size, text_color, alignment, save_path)
+
+    if st.button("Convert to Markdown"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.md")
+            convert_to_markdown(text, save_path)
+
+    if st.button("Convert to TXT"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.txt")
+            convert_to_txt(text, save_path)
+
+    if st.button("Convert to CSV"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.csv")
+            convert_to_csv(text, save_path)
+
+    if st.button("Convert to XML"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.xml")
+            convert_to_xml(text, save_path)
+
+    if st.button("Convert to JSON"):
+        if text and filename:
+            save_path = os.path.join(os.getcwd(), f"{filename}.json")
+            convert_to_json(text, font_family, font_size, text_color, alignment, save_path)
 
 if __name__ == "__main__":
     main()
