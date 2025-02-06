@@ -1,0 +1,6 @@
+streamlit
+python-docx
+fpdf2  # Use fpdf2 for Streamlit. fpdf is not actively maintained.
+pptx
+markdown
+Pillow
