@@ -15,7 +15,7 @@ import textwrap
 import datetime
 from io import BytesIO  # For in-memory file creation
 
-
+# Custom CSS to improve the layout and appearance
 st.markdown("""
     <style>
         .stButton>button {
@@ -244,115 +244,135 @@ def convert_to_json(text, font_family, font_size, text_color, alignment):
 def main():
     st.title("Text to Various File Formats Converter")
 
-    # Inputs
-    text = st.text_area("Enter your text:")
+    # Inputs with headers
+    st.markdown("### Enter Your Text Below:")
+    text = st.text_area("Text:", height=200)
+    
+    st.markdown("### Choose Styling Options:")
     font_family = st.selectbox("Select Font", ["Arial", "Times New Roman", "Courier", "Helvetica"])
     font_size = st.selectbox("Select Font Size", [str(i) for i in range(8, 73, 2)])
     alignment = st.radio("Select Text Alignment", ["left", "center", "right"])
     text_color = st.color_picker("Choose Text Color", "#000000")
 
-    # Output filename
+    st.markdown("### Output Filename:")
     filename = st.text_input("Output filename (without extension):")
 
-    # Conversion buttons and download options
-    if st.button("Convert to PDF"):
-        if text and filename:
-            pdf_output = convert_to_pdf(text, font_family, font_size, alignment)
-            if pdf_output:
-                st.download_button(
-                    label="Download PDF",
-                    data=pdf_output,
-                    file_name=f"{filename}.pdf",
-                    mime="application/pdf"
-                )
+    # Create five columns for buttons side by side in the first row
+    col1, col2, col3, col4, col5 = st.columns(5)
 
-    if st.button("Convert to DOCX"):
-        if text and filename:
-            doc_output = convert_to_docx(text, font_family, font_size, alignment)
-            if doc_output:
-                st.download_button(
-                    label="Download DOCX",
-                    data=doc_output,
-                    file_name=f"{filename}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
+    with col1:
+        if st.button("Convert to PDF"):
+            if text and filename:
+                pdf_output = convert_to_pdf(text, font_family, font_size, alignment)
+                if pdf_output:
+                    st.download_button(
+                        label="Download PDF",
+                        data=pdf_output,
+                        file_name=f"{filename}.pdf",
+                        mime="application/pdf"
+                    )
 
-    if st.button("Convert to Image"):
-        if text and filename:
-            image_output = convert_to_image(text, font_family, font_size, text_color)
-            if image_output:
-                st.download_button(
-                    label="Download Image",
-                    data=image_output,
-                    file_name=f"{filename}.png",
-                    mime="image/png"
-                )
+    with col2:
+        if st.button("Convert to DOCX"):
+            if text and filename:
+                doc_output = convert_to_docx(text, font_family, font_size, alignment)
+                if doc_output:
+                    st.download_button(
+                        label="Download DOCX",
+                        data=doc_output,
+                        file_name=f"{filename}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    )
 
-    if st.button("Convert to HTML"):
-        if text and filename:
-            html_output = convert_to_html(text, font_family, font_size, text_color, alignment)
-            if html_output:
-                st.download_button(
-                    label="Download HTML",
-                    data=html_output,
-                    file_name=f"{filename}.html",
-                    mime="text/html"
-                )
+    with col3:
+        if st.button("Convert to Image"):
+            if text and filename:
+                image_output = convert_to_image(text, font_family, font_size, text_color)
+                if image_output:
+                    st.download_button(
+                        label="Download Image",
+                        data=image_output,
+                        file_name=f"{filename}.png",
+                        mime="image/png"
+                    )
 
-    if st.button("Convert to Markdown"):
-        if text and filename:
-            md_output = convert_to_markdown(text)
-            if md_output:
-                st.download_button(
-                    label="Download Markdown",
-                    data=md_output,
-                    file_name=f"{filename}.md",
-                    mime="text/markdown"
-                )
+    with col4:
+        if st.button("Convert to HTML"):
+            if text and filename:
+                html_output = convert_to_html(text, font_family, font_size, text_color, alignment)
+                if html_output:
+                    st.download_button(
+                        label="Download HTML",
+                        data=html_output,
+                        file_name=f"{filename}.html",
+                        mime="text/html"
+                    )
 
-    if st.button("Convert to TXT"):
-        if text and filename:
-            txt_output = convert_to_txt(text)
-            if txt_output:
-                st.download_button(
-                    label="Download TXT",
-                    data=txt_output,
-                    file_name=f"{filename}.txt",
-                    mime="text/plain"
-                )
+    with col5:
+        if st.button("Convert to Markdown"):
+            if text and filename:
+                md_output = convert_to_markdown(text)
+                if md_output:
+                    st.download_button(
+                        label="Download Markdown",
+                        data=md_output,
+                        file_name=f"{filename}.md",
+                        mime="text/markdown"
+                    )
 
-    if st.button("Convert to CSV"):
-        if text and filename:
-            csv_output = convert_to_csv(text)
-            if csv_output:
-                st.download_button(
-                    label="Download CSV",
-                    data=csv_output,
-                    file_name=f"{filename}.csv",
-                    mime="text/csv"
-                )
+    # Second row of five buttons
+    col6, col7, col8, col9, col10 = st.columns(5)
 
-    if st.button("Convert to XML"):
-        if text and filename:
-            xml_output = convert_to_xml(text)
-            if xml_output:
-                st.download_button(
-                    label="Download XML",
-                    data=xml_output,
-                    file_name=f"{filename}.xml",
-                    mime="application/xml"
-                )
+    with col6:
+        if st.button("Convert to TXT"):
+            if text and filename:
+                txt_output = convert_to_txt(text)
+                if txt_output:
+                    st.download_button(
+                        label="Download TXT",
+                        data=txt_output,
+                        file_name=f"{filename}.txt",
+                        mime="text/plain"
+                    )
 
-    if st.button("Convert to JSON"):
-        if text and filename:
-            json_output = convert_to_json(text, font_family, font_size, text_color, alignment)
-            if json_output:
-                st.download_button(
-                    label="Download JSON",
-                    data=json_output,
-                    file_name=f"{filename}.json",
-                    mime="application/json"
-                )
+    with col7:
+        if st.button("Convert to CSV"):
+            if text and filename:
+                csv_output = convert_to_csv(text)
+                if csv_output:
+                    st.download_button(
+                        label="Download CSV",
+                        data=csv_output,
+                        file_name=f"{filename}.csv",
+                        mime="text/csv"
+                    )
+
+    with col8:
+        if st.button("Convert to XML"):
+            if text and filename:
+                xml_output = convert_to_xml(text)
+                if xml_output:
+                    st.download_button(
+                        label="Download XML",
+                        data=xml_output,
+                        file_name=f"{filename}.xml",
+                        mime="application/xml"
+                    )
+
+    with col9:
+        if st.button("Convert to JSON"):
+            if text and filename:
+                json_output = convert_to_json(text, font_family, font_size, text_color, alignment)
+                if json_output:
+                    st.download_button(
+                        label="Download JSON",
+                        data=json_output,
+                        file_name=f"{filename}.json",
+                        mime="application/json"
+                    )
+
+    with col10:
+        st.write("")  # Empty column for spacing or additional functionality
 
 if __name__ == "__main__":
     main()
