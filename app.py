@@ -422,13 +422,15 @@ class TextConverter:
         if not save_path or not text:
             return
 
-        try:  # Correct indentation - try block is *inside* the function
+        try:
+            # Image creation
             width, height = 800, 400
             image = Image.new("RGB", (width, height), "white")
             draw = ImageDraw.Draw(image)
 
-            try:  # Inner try for font loading
-                font = ImageFont.truetype(self.font_family.get()+".ttf", int(self.font_size.get()))
+            try:
+                # Try to load the selected font
+                font = ImageFont.truetype(self.font_family.get() + ".ttf", int(self.font_size.get()))
             except IOError:
                 try:
                     font = ImageFont.truetype("arial.ttf", int(self.font_size.get()))
@@ -436,20 +438,29 @@ class TextConverter:
                     font = ImageFont.load_default()
                     messagebox.showwarning("Warning", "No fonts found. Using default font.")
 
+            # Color conversion (hex to RGB)
             color = tuple(int(self.text_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
 
-            max_width = width - 100
+            # Wrapping the text to fit within the image width
+            max_width = width - 100  # Leave space for margins
             wrapped_text = textwrap.fill(text, width=max_width)
 
-            text_width, text_height = draw.textsize(wrapped_text, font=font)
+            # Use textbbox to get the text width and height
+            text_bbox = draw.textbbox((0, 0), wrapped_text, font=font)  # Get the bounding box
+            text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
+
+            # Calculate position to center the text
             x = (width - text_width) / 2
             y = (height - text_height) / 2
 
+            # Draw the wrapped text on the image
             draw.text((x, y), wrapped_text, font=font, fill=color)
+
+            # Save the image
             image.save(save_path)
             messagebox.showinfo("Success", f"Image file created: {save_path}")
 
-        except IOError as e:  # Outer except block
+        except IOError as e:
             messagebox.showerror("Error", f"Failed to load font: {str(e)}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to create Image: {str(e)}")
